@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>敲敲乐 · 小朋友的音乐键盘</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ============ 主题变量 ============ */
+  body {
+    --ink: #17322e;
+    --ink2: #4a6b64;
+    --card: rgba(255,255,255,.82);
+    --line: rgba(255,255,255,.9);
+  }
+  body.theme-space {
+    --ink: #eaf2ff;
+    --ink2: #9db4e8;
+    --card: rgba(30,42,90,.72);
+    --line: rgba(140,170,255,.35);
+  }
+  body.theme-candy {
+    --ink: #5a2a4a;
+    --ink2: #a06c8e;
+    --card: rgba(255,255,255,.85);
+    --line: rgba(255,182,214,.7);
+  }
+  body.theme-ocean {
+    --ink: #063a5e;
+    --ink2: #2a6e96;
+    --card: rgba(240,250,255,.82);
+    --line: rgba(255,255,255,.85);
+  }
+  body.theme-cars {
+    --ink: #23272f;
+    --ink2: #5c6470;
+    --card: rgba(255,255,255,.85);
+    --line: rgba(255,255,255,.9);
+  }
+  body.theme-dino {
+    --ink: #2b3a1f;
+    --ink2: #5c7048;
+    --card: rgba(245,252,235,.85);
+    --line: rgba(255,255,255,.9);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: background .5s ease;
+  }
+  body.theme-animals { background: linear-gradient(180deg, #aee4ff 0%, #d8f3e3 55%, #b6ecab 100%); }
+  body.theme-space {
+    background: radial-gradient(900px 500px at 80% -10%, #2b3f8f 0%, transparent 60%),
+                linear-gradient(180deg, #0a1030 0%, #14204d 60%, #1b2a6b 100%);
+  }
+  body.theme-candy { background: linear-gradient(180deg, #ffe1ef 0%, #f3e6ff 55%, #e2f4ff 100%); }
+  body.theme-ocean { background: linear-gradient(180deg, #8ee3ff 0%, #3fb0e8 45%, #0c72b0 100%); }
+  body.theme-cars { background: linear-gradient(180deg, #aee6ff 0%, #dff3ff 55%, #cfe9d8 100%); }
+  body.theme-dino { background: linear-gradient(180deg, #ffe9b8 0%, #d8ecc0 50%, #a8d89a 100%); }
+
+  /* ============ 顶栏 ============ */
+  .topbar {
+    position: relative; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; flex-wrap: wrap;
+  }
+  .logo {
+    font-size: 21px; font-weight: 800; letter-spacing: -.3px;
+    display: flex; align-items: center; gap: 8px;
+    text-shadow: 0 2px 0 rgba(255,255,255,.35);
+  }
+  body.theme-space .logo { text-shadow: 0 2px 10px rgba(120,160,255,.5); }
+  .spacer { flex: 1; }
+
+  .theme-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tbtn {
+    font: inherit; font-size: 13px; font-weight: 700;
+    padding: 6px 10px; border-radius: 999px; cursor: pointer;
+    border: 2px solid var(--line); background: var(--card); color: var(--ink);
+    box-shadow: 0 3px 0 rgba(0,0,0,.08);
+    transition: transform .12s ease;
+    white-space: nowrap;
+  }
+  .tbtn:active { transform: translateY(2px); }
+  .tbtn.on { background: #ffd93d; border-color: rgba(0,0,0,.12); color: #4a3b00; }
+  .tbtn.locked { background: #ff6b6b; border-color: rgba(0,0,0,.16); color: #fff; }
+
+  /* ============ 音色切换 ============ */
+  .timbre-wrap { position: relative; }
+  #timbreBtn { background: linear-gradient(180deg, #fff7dd, #ffe9a8); border-color: rgba(180,140,20,.25); color: #6a4c00; }
+  .timbre-menu {
+    position: absolute; top: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    display: none; flex-direction: column; gap: 3px; padding: 8px;
+    background: #ffffff; border: 2px solid var(--line); border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.18); z-index: 70; min-width: 152px;
+    opacity: 0; transition: opacity .12s ease, transform .12s ease;
+  }
+  .timbre-wrap.open .timbre-menu { display: flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+  .tbm {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+    font: inherit; font-size: 14px; font-weight: 800; text-align: left;
+    padding: 7px 12px; border-radius: 10px; border: 0; background: transparent;
+    color: var(--ink); cursor: pointer; white-space: nowrap;
+  }
+  .tbm i { font-style: normal; font-size: 11px; font-weight: 600; color: #98a0b0; }
+  .tbm:hover { background: #f1f5fc; }
+  .tbm.on { background: #fff2c4; }
+  .tbm.on i { color: #a98700; }
+
+
+  .counter {
+    font-size: 14px; font-weight: 800;    background: var(--card); border: 2px solid var(--line);
+    padding: 7px 14px; border-radius: 999px; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 3px 0 rgba(0,0,0,.08);
+  }
+  .counter.bump { animation: bump .3s ease; }
+  @keyframes bump { 40% { transform: scale(1.22); } }
+
+  .vol { display: flex; align-items: center; gap: 7px; }
+  .vol input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 80px; height: 8px;
+    border-radius: 8px; background: rgba(120,120,140,.35); outline: none; cursor: pointer;
+  }
+  .vol input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; border: 3px solid #5ec8f8; box-shadow: 0 2px 5px rgba(0,0,0,.2); cursor: pointer;
+  }
+  .mutebtn {
+    font-size: 19px; line-height: 1; padding: 8px 11px; cursor: pointer;
+    border: 2px solid var(--line); background: var(--card); border-radius: 14px;
+    box-shadow: 0 3px 0 rgba(0,0,0,.08); transition: transform .12s;
+  }
+  .mutebtn:active { transform: translateY(2px); }
+  .mutebtn.muted { filter: grayscale(1); opacity: .6; }
+
+  /* ============ 舞台 ============ */
+  #stage { position: relative; flex: 1; z-index: 2; overflow: hidden; }
+  .tip {
+    position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+    z-index: 2;
+    font-size: 15px; font-weight: 700; color: var(--ink2);
+    background: var(--card); border: 2px solid var(--line);
+    padding: 7px 18px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 3px 0 rgba(0,0,0,.08);
+    animation: tipbob 2.6s ease-in-out infinite;
+  }
+  @keyframes tipbob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
+
+  #scene { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+
+  #ground {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 54px;
+    border-radius: 26px 26px 0 0;
+  }
+  body.theme-animals #ground { background: linear-gradient(180deg, #93dc7c, #7cc968); box-shadow: 0 -4px 14px rgba(46,110,40,.15); }
+  body.theme-space #ground { background: linear-gradient(180deg, #2c3a7c, #1d2a5e); box-shadow: 0 -4px 14px rgba(0,0,0,.3); }
+  body.theme-candy #ground { background: linear-gradient(180deg, #ffd9ec, #ffc3de); box-shadow: 0 -4px 14px rgba(214,90,150,.15); }
+  body.theme-ocean #ground { background: linear-gradient(180deg, #f6dda4, #eac98b); box-shadow: 0 -4px 14px rgba(120,80,20,.18); }
+  body.theme-cars #ground { background: linear-gradient(180deg, #4a505c, #3a3f49); box-shadow: 0 -4px 14px rgba(0,0,0,.3); }
+  body.theme-dino #ground { background: linear-gradient(180deg, #5da352, #4c8c43); box-shadow: 0 -4px 14px rgba(30,70,25,.2); }
+
+  /* 里程碑提示 */
+  .toast {
+    position: fixed; left: 50%; top: 34%; z-index: 9;
+    transform: translate(-50%,-50%);
+    font-size: clamp(18px, 3.4vw, 30px); font-weight: 900;
+    color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.18), 0 0 24px rgba(255,120,180,.5);
+    pointer-events: none; white-space: nowrap;
+    animation: toastfly 2s ease forwards;
+  }
+  @keyframes toastfly {
+    0% { transform: translate(-50%,-50%) scale(0); opacity: 0; }
+    14% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+    22% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translate(-50%,-90%) scale(1.05); opacity: 0; }
+  }
+
+  /* 全部角色都在这块画布上实时绘制（矢量动画角色） */
+  #fx { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
+
+  /* ============ 键盘（通栏平铺 · 无底板） ============ */
+  /* 14 键一行正好铺满屏宽；高度仍受 50vh 约束，保证舞台占一半 */
+  .kbwrap {
+    --gap: 5px;
+    --kw: calc((100vw - 24px - 13 * var(--gap)) / 14);
+    --th: clamp(26px, min(calc(var(--kw) * 0.62), calc((50vh - 40px) / 7.05)), 66px);
+    position: relative; z-index: 5;
+    width: 100%;
+    padding: 4px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .kbrow { display: flex; justify-content: center; gap: var(--gap); margin-top: var(--gap); }
+  .kbrow:first-child { margin-top: 0; }
+  .tile {
+    width: var(--kw);
+    height: var(--th);
+    border-radius: calc(var(--th) * 0.26);
+    border: 2px solid rgba(255,255,255,.85);
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: calc(var(--th) * 0.1);
+    padding: 0 calc(var(--th) * 0.08);
+    cursor: pointer;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,0) 52%),
+      linear-gradient(0deg, rgba(0,0,0,.22), rgba(0,0,0,0) 42%),
+      var(--tile, #ff8a9b);
+    box-shadow:
+      0 4px 0 rgba(0,0,0,.26),
+      0 7px 13px rgba(0,0,0,.16),
+      inset 0 2px 0 rgba(255,255,255,.5);
+    transition: transform .08s ease, box-shadow .08s ease, filter .08s ease;
+    position: relative;
+  }
+  .tile .lt {
+    font-size: calc(var(--th) * 0.42); font-weight: 900; color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.45), 0 0 5px rgba(0,0,0,.2);
+    line-height: 1; white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Mono", Menlo, monospace;
+  }
+  /* emoji 只作占位与无障碍文本，实际图标由 #icons 画布实时绘制动画角色 */
+  .tile .em {
+    font-size: calc(var(--th) * 0.5); line-height: 1;
+    opacity: 0;
+  }
+  /* 顶部锁定键（esc / F1-F12 / del）：灰化、不可点，只露一把小锁 */
+  .tile.off {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0) 52%),
+      linear-gradient(0deg, rgba(0,0,0,.26), rgba(0,0,0,0) 42%),
+      #8b94a6;
+    border-color: rgba(255,255,255,.45);
+    box-shadow: 0 3px 0 rgba(0,0,0,.20), inset 0 2px 0 rgba(255,255,255,.3);
+    cursor: not-allowed;
+    opacity: .8;
+    filter: saturate(.35);
+  }
+  .tile.off .lt { color: rgba(255,255,255,.75); }
+  .tile.off .em { opacity: .95; font-size: calc(var(--th) * 0.4); }
+  .tile.off.active { transform: none; filter: saturate(.35); }
+
+  .tile.active {
+    transform: translateY(3px) scale(.94);
+    box-shadow:
+      0 1px 0 rgba(0,0,0,.26),
+      0 0 18px var(--glow, rgba(255,255,255,.8)),
+      0 0 34px var(--glow, rgba(255,255,255,.8)),
+      inset 0 2px 0 rgba(255,255,255,.5);
+    filter: brightness(1.22) saturate(1.3);
+  }
+  .tile.space {
+    width: calc(var(--kw) * 4.2);
+    border-radius: 999px;
+  }
+  .tile.space .lt { font-size: calc(var(--th) * 0.44); }
+  /* F 行与功能键行：标签略小，避免长标签（ESC/DEL/F12）挤占图标 */
+  .tile.small .lt { font-size: calc(var(--th) * 0.34); }
+
+  /* 键盘图标动画层：位于键盘之上、粒子层之下 */
+  #icons { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+
+  /* ============ 锁定态：被 Esc 顶出全屏后的回全屏遮罩 ============ */
+  #fsHint {
+    position: fixed; inset: 62px 0 0 0; z-index: 60; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    background: rgba(12,18,34,.78);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    cursor: pointer; user-select: none;
+  }
+  body.fs-lost #fsHint { display: flex; }
+  #fsHint .fsh-ico { font-size: clamp(56px, 9vw, 92px); animation: fshPulse 1.5s ease-in-out infinite; }
+  #fsHint .fsh-txt {
+    color: #ffffff; font-size: clamp(16px, 2.4vw, 24px); font-weight: 800;
+    text-align: center; line-height: 1.7; letter-spacing: .5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,.45);
+  }
+  #fsHint .fsh-txt b { color: #ffe066; }
+  #fsHint .fsh-sub { color: rgba(255,255,255,.62); font-size: 13px; font-weight: 600; }
+  @keyframes fshPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+</style>
+</head>
+<body class="theme-animals">
+
+<div class="topbar">
+  <div class="logo">🎹 敲敲乐</div>
+  <div class="spacer"></div>
+  <div class="theme-btns" id="themeBtns">
+    <button class="tbtn on" data-t="animals" title="动物乐园">🐾 动物</button>
+    <button class="tbtn" data-t="space" title="太空探险">🚀 太空</button>
+    <button class="tbtn" data-t="candy" title="糖果彩虹">🍭 糖果</button>
+    <button class="tbtn" data-t="ocean" title="海底世界">🐬 海底</button>
+    <button class="tbtn" data-t="cars" title="汽车城">🚗 汽车</button>
+    <button class="tbtn" data-t="dino" title="恐龙乐园">🦖 恐龙</button>
+  </div>
+  <div class="timbre-wrap" id="timbreWrap">
+    <button class="tbtn" id="timbreBtn" title="切换按键音色">🎵 <span id="timbreLabel">木琴</span> ▾</button>
+    <div class="timbre-menu" id="timbreMenu">
+      <button class="tbm" data-tb="marimba"><b>🎵 木琴</b><i>清脆跳跃</i></button>
+      <button class="tbm" data-tb="musicbox"><b>🎁 八音盒</b><i>梦幻柔和</i></button>
+      <button class="tbm" data-tb="piano"><b>🎹 钢琴</b><i>饱满共鸣</i></button>
+      <button class="tbm" data-tb="synth"><b>🎛️ 电子</b><i>明亮扫频</i></button>
+    </div>
+  </div>
+  <button class="tbtn" id="lockBtn" title="全屏儿童锁">🔒 儿童锁</button>
+  <div class="counter" id="counter">🎵 0 个音</div>
+  <div class="vol">
+    <input type="range" id="vol" min="0" max="100" value="70" title="音量">
+    <button class="mutebtn" id="muteBtn" title="静音">🔊</button>
+  </div>
+</div>
+
+<div id="stage">
+  <div id="scene"><div id="ground"></div></div>
+  <div class="tip">👋 随便按键盘，小动物就会蹦到舞台上唱歌！</div>
+</div>
+
+<div class="kbwrap" id="kbwrap"></div>
+
+<canvas id="icons"></canvas>
+<canvas id="fx"></canvas>
+
+<!-- 锁定态下被 Esc 顶出全屏时的回全屏入口 -->
+<div id="fsHint" role="button" aria-label="点一下回到全屏">
+  <div class="fsh-ico">🔒</div>
+  <div class="fsh-txt">退出键已经锁住啦<br><b>点一下屏幕回到全屏</b></div>
+  <div class="fsh-sub">家长：长按右上角「已锁定」按钮 1.5 秒可解除</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =====================================================
+     1. 音频引擎
+     ===================================================== */
+  let ctx = null, master = null, reverbBus = null, wetGain = null, noiseBuf = null;
+  let volume = 0.7, muted = false;
+
+  function initAudio() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : volume;
+
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 24;
+    comp.ratio.value = 5;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.22;
+    master.connect(comp);
+    comp.connect(ctx.destination);
+
+    const conv = ctx.createConvolver();
+    conv.buffer = makeImpulse(1.6, 2.8);
+    wetGain = ctx.createGain();
+    wetGain.gain.value = 0.16;
+    reverbBus = ctx.createGain();
+    reverbBus.connect(conv);
+    conv.connect(wetGain);
+    wetGain.connect(master);
+  }
+
+  function makeImpulse(dur, decay) {
+    const rate = ctx.sampleRate, len = Math.floor(rate * dur);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  function getNoise() {
+    if (!noiseBuf) {
+      const len = Math.floor(ctx.sampleRate * 2);
+      noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return noiseBuf;
+  }
+
+  function audioReady() {
+    initAudio();
+    if (ctx.state === "suspended") ctx.resume();
+  }
+
+  function makeOut() {
+    const out = ctx.createGain();
+    out.connect(master);
+    out.connect(reverbBus);
+    return out;
+  }
+
+  function noiseSource() {
+    const src = ctx.createBufferSource();
+    src.buffer = getNoise();
+    src.loop = true;
+    return src;
+  }
+
+  function bell(freq, t, vel) {
+    const out = makeOut();
+    const dur = Math.min(1.8, Math.max(0.7, 2.0 - freq / 1400));
+    const env = out.gain;
+    env.setValueAtTime(0.0001, t);
+    env.exponentialRampToValueAtTime(vel * 0.5, t + 0.005);
+    env.exponentialRampToValueAtTime(vel * 0.16, t + 0.14);
+    env.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    [[1, 1, "sine"], [2.01, 0.4, "sine"], [3.0, 0.14, "sine"], [4.2, 0.07, "triangle"]].forEach(([r, a, type]) => {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = freq * r;
+      o.detune.value = (Math.random() - 0.5) * 8;
+      const g = ctx.createGain();
+      g.gain.value = a;
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + dur + 0.1);
+    });
+  }
+
+  /* ---------- 四种音乐音色 ---------- */
+  const TIMBRES = {
+    marimba:  { name: "木琴",   emoji: "🎵", tip: "清脆跳跃的敲击感" },
+    musicbox: { name: "八音盒", emoji: "🎁", tip: "梦幻柔和的金属齿音" },
+    piano:    { name: "钢琴",   emoji: "🎹", tip: "饱满的琴弦共鸣" },
+    synth:    { name: "电子",   emoji: "🎛️", tip: "明亮带滤波扫频" }
+  };
+  let timbre = "marimba";
+  try {
+    const savedTb = localStorage.getItem("qqk-timbre");
+    if (savedTb && TIMBRES[savedTb]) timbre = savedTb;
+  } catch (err) {}
+
+  /* 木琴：1 + 3.9 + 9.2 倍泛音，短促衰减 + 木质敲击瞬态 */
+  function toneMarimba(freq, t, vel) {
+    const out = makeOut();
+    const dur = Math.min(1.1, Math.max(0.45, 90 / freq));
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vel * 0.55, t + 0.004);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    [[1, 1, 1], [3.9, 0.34, 0.42], [9.2, 0.09, 0.22]].forEach(([r, a, k]) => {
+      const o = ctx.createOscillator();
+      o.type = "sine";
+      o.frequency.value = freq * r;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(a, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur * k);
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + dur + 0.05);
+    });
+
+    const n = noiseSource();
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = Math.min(6500, freq * 9);
+    bp.Q.value = 1.1;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(vel * 0.11, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.028);
+    n.connect(bp); bp.connect(ng); ng.connect(out);
+    n.start(t); n.stop(t + 0.06);
+  }
+
+  /* 八音盒：突出高次金属泛音，极快起音 + 长尾 */
+  function toneMusicBox(freq, t, vel) {
+    const out = makeOut();
+    const dur = 1.9;
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vel * 0.4, t + 0.003);
+    out.gain.exponentialRampToValueAtTime(vel * 0.11, t + 0.22);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    [[1, 0.9], [2, 0.28], [3, 0.17], [5.4, 0.09], [8.1, 0.045]].forEach(([r, a]) => {
+      const o = ctx.createOscillator();
+      o.type = "sine";
+      o.frequency.value = freq * r;
+      o.detune.value = (Math.random() - 0.5) * 6;
+      const g = ctx.createGain();
+      g.gain.value = a;
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + dur);
+    });
+  }
+
+  /* 钢琴：6 次谐波 + 低通随包络下扫 + 锤击噪声 */
+  function tonePiano(freq, t, vel) {
+    const out = makeOut();
+    const dur = Math.min(2.4, 1.3 + 70 / freq);
+
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 0.8;
+    lp.frequency.setValueAtTime(Math.min(9000, freq * 10), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(650, freq * 2.6), t + dur * 0.75);
+    lp.connect(out);
+
+    for (let n = 1; n <= 6; n++) {
+      const o = ctx.createOscillator();
+      o.type = n <= 3 ? "triangle" : "sine";
+      o.frequency.value = freq * n;
+      o.detune.value = (Math.random() - 0.5) * 7;
+      const g = ctx.createGain();
+      g.gain.value = 0.85 / Math.pow(n, 1.35);
+      o.connect(g); g.connect(lp);
+      o.start(t); o.stop(t + dur + 0.08);
+    }
+
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vel * 0.55, t + 0.008);
+    out.gain.exponentialRampToValueAtTime(vel * 0.2, t + 0.28);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    const nz = noiseSource();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 2600;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(vel * 0.07, t);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+    nz.connect(hp); hp.connect(ng); ng.connect(out);
+    nz.start(t); nz.stop(t + 0.04);
+  }
+
+  /* 电子合成：双锯齿失谐 + 低通扫频 + sub 低音 */
+  function toneSynth(freq, t, vel) {
+    const out = makeOut();
+    const dur = 0.95;
+
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 7;
+    lp.frequency.setValueAtTime(Math.min(7500, freq * 11), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(480, freq * 2), t + 0.34);
+    lp.connect(out);
+
+    [-7, 7].forEach(dt => {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = freq;
+      o.detune.value = dt;
+      const g = ctx.createGain();
+      g.gain.value = 0.4;
+      o.connect(g); g.connect(lp);
+      o.start(t); o.stop(t + dur + 0.05);
+    });
+
+    const sub = ctx.createOscillator();
+    sub.type = "sine";
+    sub.frequency.value = freq * 0.5;
+    const sg = ctx.createGain();
+    sg.gain.value = 0.16;
+    sub.connect(sg); sg.connect(out);
+    sub.start(t); sub.stop(t + dur);
+
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(vel * 0.5, t + 0.01);
+    out.gain.exponentialRampToValueAtTime(vel * 0.22, t + 0.2);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+
+  const TONE_FN = { marimba: toneMarimba, musicbox: toneMusicBox, piano: tonePiano, synth: toneSynth };
+
+  function playTone(midi, t, vel) {
+    const fn = TONE_FN[timbre] || toneMarimba;
+    fn(midiToFreq(midi), t, vel);
+  }
+
+  function tom(t, v, f0, f1, dur) {    const out = makeOut();
+    const o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.7);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(v * 0.55, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  const DRUM_FN = {
+    kick(t, v) {
+      const out = makeOut();
+      const o = ctx.createOscillator(); o.type = "sine";
+      o.frequency.setValueAtTime(165, t);
+      o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + 0.55);
+    },
+    snare(t, v) {
+      const out = makeOut();
+      const n = noiseSource();
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1900; bp.Q.value = 0.8;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.62, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      n.connect(bp); bp.connect(g); g.connect(out);
+      n.start(t); n.stop(t + 0.25);
+      const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = 192;
+      const g2 = ctx.createGain();
+      g2.gain.setValueAtTime(v * 0.3, t);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      o.connect(g2); g2.connect(out);
+      o.start(t); o.stop(t + 0.14);
+    },
+    hatC(t, v) {
+      const out = makeOut();
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 8200;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.28, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+      n.connect(hp); hp.connect(g); g.connect(out);
+      n.start(t); n.stop(t + 0.08);
+    },
+    hatO(t, v) {
+      const out = makeOut();
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 7200;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.24, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+      n.connect(hp); hp.connect(g); g.connect(out);
+      n.start(t); n.stop(t + 0.4);
+    },
+    tomLow(t, v) { tom(t, v, 190, 82, 0.42); },
+    tomMid(t, v) { tom(t, v, 280, 130, 0.34); },
+    clap(t, v) {
+      const out = makeOut();
+      for (let i = 0; i < 3; i++) {
+        const st = t + i * 0.011;
+        const n = noiseSource();
+        const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1250; bp.Q.value = 1.1;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(v * (0.32 - i * 0.05), st);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + 0.028);
+        n.connect(bp); bp.connect(g); g.connect(out);
+        n.start(st); n.stop(st + 0.05);
+      }
+    },
+    cowbell(t, v) {
+      const out = makeOut();
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 1.4;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.24, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      bp.connect(g); g.connect(out);
+      [540, 800].forEach(f => {
+        const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = f;
+        const og = ctx.createGain(); og.gain.value = 0.5;
+        o.connect(og); og.connect(bp);
+        o.start(t); o.stop(t + 0.4);
+      });
+    },
+    crash(t, v) {
+      const out = makeOut();
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 4800;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.32, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+      n.connect(hp); hp.connect(g); g.connect(out);
+      n.start(t); n.stop(t + 1.5);
+    },
+    rim(t, v) {
+      const out = makeOut();
+      const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = 420;
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200; bp.Q.value = 3;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(v * 0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+      o.connect(bp); bp.connect(g); g.connect(out);
+      o.start(t); o.stop(t + 0.06);
+    },
+    impact(t, v) {
+      DRUM_FN.kick(t, v * 1.1);
+      DRUM_FN.crash(t, v * 0.5);
+    }
+  };
+
+  /* =====================================================
+     2. 数据：主题 / 键位 / 音高
+     ===================================================== */
+  const THEMES = {
+    animals: {
+      colors: ["#ff8a9b", "#ffb56b", "#ffd93d", "#7ed957", "#5ec8f8", "#b78bfb"],
+      letters: ["🐶","🐱","🐭","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🦉","🦆","🦄","🐝","🐞","🦋","🐢","🐙","🦕","🐳"],
+      creatures: ["cat","bunny","bear","bird","butterfly","bee","fish","turtle","snail","balloon","star","flower",
+                  "cat","bunny","bear","bird","butterfly","bee","fish","turtle","snail","balloon","star","flower","cat","bunny"],
+      mascot: { type: "cat", color: "#ff8a9b" },
+      props: [
+        { t: "flower", c: "#ff8a9b", x: 8, y: 58, s: 36, m: "sway" },
+        { t: "butterfly", c: "#b78bfb", x: 22, y: 24, s: 30, m: "drift" },
+        { t: "bird", c: "#5ec8f8", x: 40, y: 74, s: 30, m: "drift" },
+        { t: "flower", c: "#ffd93d", x: 76, y: 66, s: 38, m: "sway" },
+        { t: "bee", c: "#ffb56b", x: 88, y: 30, s: 26, m: "drift" },
+        { t: "butterfly", c: "#7ed957", x: 62, y: 20, s: 28, m: "drift" },
+        { t: "snail", c: "#ff8a9b", x: 14, y: 84, s: 26, m: "sway" },
+        { t: "balloon", c: "#5ec8f8", x: 92, y: 56, s: 30, m: "bob" }
+      ],
+      ambient: "petals", groundStyle: "grass",
+      tip: "🐾 随便按键盘，小动物就会蹦到舞台上！"
+    },
+    space: {
+      colors: ["#ff6b8a", "#ffa14e", "#ffe14e", "#4ee88a", "#4ec3ff", "#b06bff"],
+      letters: ["🚀","🛸","👾","🤖","🌟","⭐","🌙","🪐","☄️","🔭","🧑‍🚀","🌠","💫","🌞","🌍","⚡","🛰️","🔥","💎","🌀","🔷","🔶","✨","🧿","🎈","🐣"],
+      creatures: ["rocket","rocket","ufo","robot","star","star","rocket","ufo","robot","star","balloon","star",
+                  "rocket","rocket","ufo","robot","star","rocket","ufo","robot","star","balloon","rocket","ufo","robot","star"],
+      mascot: { type: "rocket", color: "#4ec3ff" },
+      props: [
+        { t: "star", c: "#ffd93d", x: 6, y: 26, s: 30, m: "bob" },
+        { t: "rocket", c: "#5ec8f8", x: 20, y: 62, s: 40, m: "drift" },
+        { t: "ufo", c: "#b06bff", x: 44, y: 24, s: 38, m: "drift" },
+        { t: "robot", c: "#4ee88a", x: 70, y: 66, s: 34, m: "bob" },
+        { t: "star", c: "#ff6b8a", x: 84, y: 40, s: 26, m: "bob" },
+        { t: "rocket", c: "#ffa14e", x: 92, y: 74, s: 32, m: "drift" },
+        { t: "ufo", c: "#4ec3ff", x: 30, y: 84, s: 30, m: "drift" },
+        { t: "robot", c: "#ffd93d", x: 60, y: 44, s: 28, m: "bob" }
+      ],
+      ambient: "stars", groundStyle: "pebbles",
+      tip: "🚀 按下键盘，发射小火箭！"
+    },
+    candy: {
+      colors: ["#ff9ec0", "#ffc48a", "#ffe28a", "#a5e8a0", "#9cd8ff", "#d3a8ff"],
+      letters: ["🍭","🍬","🍩","🧁","🍫","🍰","🎂","🍦","🍧","🍓","🍒","🍉","🍇","🍎","🍑","🧡","💛","💚","💙","💜","🌈","🎈","🎁","🪅","🍪","🥞"],
+      creatures: ["lollipop","donut","cupcake","flower","balloon","lollipop","donut","cupcake","flower","balloon","lollipop","donut",
+                  "cupcake","flower","balloon","lollipop","donut","cupcake","flower","balloon","lollipop","donut","cupcake","flower","balloon","donut"],
+      mascot: { type: "lollipop", color: "#ff9ec0" },
+      props: [
+        { t: "lollipop", c: "#ff9ec0", x: 8, y: 56, s: 36, m: "sway" },
+        { t: "donut", c: "#ffc48a", x: 24, y: 26, s: 32, m: "drift" },
+        { t: "cupcake", c: "#d3a8ff", x: 46, y: 70, s: 34, m: "bob" },
+        { t: "flower", c: "#ffe28a", x: 72, y: 28, s: 30, m: "sway" },
+        { t: "balloon", c: "#9cd8ff", x: 90, y: 58, s: 32, m: "bob" },
+        { t: "lollipop", c: "#a5e8a0", x: 62, y: 76, s: 28, m: "sway" },
+        { t: "donut", c: "#ff9ec0", x: 36, y: 44, s: 26, m: "drift" },
+        { t: "cupcake", c: "#ffc48a", x: 84, y: 82, s: 26, m: "bob" }
+      ],
+      ambient: "gum", groundStyle: "sprinkles",
+      tip: "🍭 按键盘，糖果跳出来啦！"
+    },
+    ocean: {
+      colors: ["#ff7f9e", "#ffd93d", "#4ee0c2", "#4ec3ff", "#9b7bff", "#ff8a7a"],
+      letters: ["🐬","🐟","🐠","🐡","🦈","🐙","🦑","🦐","🦀","🐚","🪸","🐢","🐳","🦭","🐋","🐊","🦞","🌊","🫧","⛵","🚤","⚓","🧜‍♀️","🪼","🥾","💎"],
+      creatures: ["fish","octopus","crab","jelly","turtle","fish","octopus","crab","jelly","turtle","fish","octopus",
+                  "crab","jelly","turtle","fish","octopus","crab","jelly","turtle","fish","octopus","crab","jelly","turtle","fish"],
+      mascot: { type: "fish", color: "#4ec3ff" },
+      props: [
+        { t: "fish", c: "#ffd93d", x: 10, y: 30, s: 34, m: "drift" },
+        { t: "jelly", c: "#ff7f9e", x: 28, y: 62, s: 34, m: "drift" },
+        { t: "octopus", c: "#9b7bff", x: 48, y: 76, s: 36, m: "bob" },
+        { t: "crab", c: "#ff8a7a", x: 70, y: 82, s: 32, m: "sway" },
+        { t: "turtle", c: "#4ee0c2", x: 86, y: 60, s: 36, m: "drift" },
+        { t: "fish", c: "#5ec8f8", x: 60, y: 26, s: 28, m: "drift" },
+        { t: "jelly", c: "#4ec3ff", x: 36, y: 18, s: 26, m: "drift" },
+        { t: "crab", c: "#ffb56b", x: 90, y: 24, s: 26, m: "sway" }
+      ],
+      ambient: "bubbles", groundStyle: "seaweed",
+      tip: "🐬 按键盘，小鱼在海里跳舞！"
+    },
+    cars: {
+      colors: ["#ff6b6b", "#ffa34d", "#ffd93d", "#4ecb71", "#3fa7ff", "#9b6bff"],
+      letters: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🛵","🏍️","🚲","🛴","🚨","🚦","⛽","🏁","🅿️","🔧","🛞","🚏"],
+      creatures: ["car","bus","traffic","car","car","bus","traffic","car","car","bus","traffic","car",
+                  "car","bus","traffic","car","car","bus","traffic","car","car","bus","traffic","car","bus","car"],
+      mascot: { type: "car", color: "#ff6b6b" },
+      props: [
+        { t: "car", c: "#ff6b6b", x: 10, y: 56, s: 40, m: "drift" },
+        { t: "traffic", c: "#3a3f49", x: 30, y: 24, s: 34, m: "bob" },
+        { t: "bus", c: "#3fa7ff", x: 50, y: 66, s: 44, m: "drift" },
+        { t: "car", c: "#4ecb71", x: 70, y: 30, s: 36, m: "drift" },
+        { t: "traffic", c: "#3a3f49", x: 86, y: 70, s: 30, m: "bob" },
+        { t: "car", c: "#ffd93d", x: 90, y: 30, s: 34, m: "drift" },
+        { t: "bus", c: "#9b6bff", x: 24, y: 84, s: 36, m: "drift" },
+        { t: "car", c: "#ffa34d", x: 58, y: 20, s: 30, m: "drift" }
+      ],
+      ambient: "clouds", groundStyle: "dashes",
+      tip: "🚗 按键盘，小汽车跑起来啦！"
+    },
+    dino: {
+      colors: ["#ff8a7a", "#ffb84e", "#f2e14e", "#7ed957", "#5ec8f8", "#b78bfb"],
+      letters: ["🦖","🦕","🐉","🐲","🦎","🐢","🐊","🥚","🌋","🌴","🪨","🌿","🍃","🦴","🍄","🦋","🐛","🐝","🌻","⛰️","🥁","🪺","🌳","🌾","🦚","🥾"],
+      creatures: ["dino","egg","dino","dino","egg","dino","egg","dino","egg","dino","dino","egg",
+                  "dino","egg","dino","egg","dino","dino","egg","dino","egg","dino","egg","dino","egg","dino"],
+      mascot: { type: "dino", color: "#7ed957" },
+      props: [
+        { t: "dino", c: "#7ed957", x: 10, y: 58, s: 40, m: "sway" },
+        { t: "egg", c: "#ffd93d", x: 30, y: 74, s: 30, m: "bob" },
+        { t: "dino", c: "#5ec8f8", x: 52, y: 70, s: 36, m: "sway" },
+        { t: "egg", c: "#ff8a7a", x: 74, y: 78, s: 28, m: "bob" },
+        { t: "flower", c: "#ffb84e", x: 20, y: 28, s: 30, m: "sway" },
+        { t: "butterfly", c: "#b78bfb", x: 44, y: 22, s: 28, m: "drift" },
+        { t: "flower", c: "#ff8a7a", x: 66, y: 34, s: 28, m: "sway" },
+        { t: "dino", c: "#f2e14e", x: 88, y: 52, s: 34, m: "sway" }
+      ],
+      ambient: "leaves", groundStyle: "ferns",
+      tip: "🦖 按键盘，小恐龙蹦出来啦！"
+    }
+  };
+  let theme = "animals";
+
+  const DRUM_EMOJI = { "1":"👟", "2":"🥁", "3":"✨", "4":"🌟", "5":"🪘", "6":"🎸", "7":"👏", "8":"🔔", "9":"🎆", "0":"🪙", " ":"💥" };
+  const DRUM_ID =   { "1":"kick", "2":"snare", "3":"hatC", "4":"hatO", "5":"tomLow", "6":"tomMid", "7":"clap", "8":"cowbell", "9":"crash", "0":"rim", " ":"impact" };
+
+  const SPECIAL_EMOJI = {
+    "escape": "🎪", "tab": "🔀", "capslock": "🔠", "enter": "🎉",
+    "backspace": "🧹", "delete": "🧹", "shift": "⬆️", "fn": "🎛️",
+    "control": "🕹️", "meta": "🍎", "alt": "🎵",
+    "arrowup": "⬆️", "arrowdown": "⬇️", "arrowleft": "⬅️", "arrowright": "➡️"
+  };
+  const SPECIAL_DRUM = {
+    "escape": "hatC", "tab": "rim", "capslock": "tomLow", "enter": "clap",
+    "backspace": "snare", "delete": "snare", "shift": "tomMid", "fn": "hatO",
+    "control": "cowbell", "meta": "kick", "alt": "hatC",
+    "arrowup": "tomMid", "arrowdown": "tomLow", "arrowleft": "rim", "arrowright": "hatC"
+  };
+  const FKEY_RE = /^f([1-9]|1[0-2])$/;
+
+  const ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+  const LETTERS = "abcdefghijklmnopqrstuvwxyz";
+  const DIGITS = "1234567890";
+  const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26, 28, 31, 33];
+  const midiToFreq = m => 440 * Math.pow(2, (m - 69) / 12);
+
+  /* =====================================================
+     3. 构建屏幕键盘
+     ===================================================== */
+  const tiles = {};
+  const tileEmojiEls = {};
+  const PALETTE_LEN = 6;
+  const GLOWS = ["rgba(255,138,155,.9)", "rgba(255,181,107,.9)", "rgba(255,217,61,.9)", "rgba(126,217,87,.9)", "rgba(94,200,248,.9)", "rgba(183,139,251,.9)"];
+
+  /* 顶部 esc 那一排永久禁用：esc + F1~F12 + del
+     原因：这几个键会退出全屏、触发系统音量/亮度、删除内容，小朋友一按就出事
+     注意：Mac 笔记本上那颗 delete 键发出的是 Backspace，必须一起锁 */
+  const OFF_KEYS = new Set(["escape", "delete", "backspace"]);
+  for (let i = 1; i <= 12; i++) OFF_KEYS.add("f" + i);
+  const isOffKey = k => OFF_KEYS.has(k);
+
+  function buildKeyboard() {
+    const wrap = document.getElementById("kbwrap");
+    let colorIdx = 0;
+
+    const fRow = document.createElement("div");
+    fRow.className = "kbrow";
+    const fkeys = ["escape", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12", "delete"];
+    for (const k of fkeys) {
+      const cap = k === "escape" ? "esc" : (k === "delete" ? "del" : k.toUpperCase());
+      const t = makeTile(k, cap, colorIdx++);
+      t.classList.add("small");
+      fRow.appendChild(t);
+    }
+    wrap.appendChild(fRow);
+
+    const digitRow = document.createElement("div");
+    digitRow.className = "kbrow";
+    for (const d of DIGITS) digitRow.appendChild(makeTile(d, d, colorIdx++));
+    wrap.appendChild(digitRow);
+
+    ROWS.forEach(row => {
+      const r = document.createElement("div");
+      r.className = "kbrow";
+      for (const ch of row) r.appendChild(makeTile(ch.toLowerCase(), ch.toLowerCase(), colorIdx++));
+      wrap.appendChild(r);
+    });
+
+    const spRow = document.createElement("div");
+    spRow.className = "kbrow";
+    const sp = makeTile(" ", "低 音", 2);
+    sp.classList.add("space");
+    spRow.appendChild(sp);
+    wrap.appendChild(spRow);
+
+    const mRow = document.createElement("div");
+    mRow.className = "kbrow";
+    const modkeys = [
+      ["fn", "fn"], ["control", "⌃"], ["alt", "⌥"], ["meta", "⌘"],
+      ["arrowup", "↑"], ["arrowleft", "←"], ["arrowdown", "↓"], ["arrowright", "→"]
+    ];
+    for (const [k, cap] of modkeys) {
+      const t = makeTile(k, cap, colorIdx++);
+      t.classList.add("small");
+      mRow.appendChild(t);
+    }
+    wrap.appendChild(mRow);
+  }
+
+  function makeTile(key, capText, colorIdx) {
+    const el = document.createElement("div");
+    el.className = "tile";
+    el.dataset.ci = colorIdx % PALETTE_LEN;
+    el.style.setProperty("--glow", GLOWS[colorIdx % GLOWS.length]);
+    applyTileColor(el);
+
+    const off = isOffKey(key);
+    if (off) el.classList.add("off");
+
+    const lt = document.createElement("div");
+    lt.className = "lt";
+    lt.textContent = capText === " " ? "重低音" : capText.toUpperCase();
+    el.appendChild(lt);
+
+    const em = document.createElement("div");
+    em.className = "em";
+    em.textContent = off ? "🔒" : emojiFor(key);
+    el.appendChild(em);
+
+    tileEmojiEls[key] = em;
+    el.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      if (off) {                       /* 锁定键：不发声、不弹图案，只提示 */
+        warnOffKey();
+        return;
+      }
+      audioReady();
+      playKey(key, el);
+    });
+    tiles[key] = el;
+    return el;
+  }
+
+  /* 按到锁定键时的提示（限流，避免连按刷屏） */
+  let offWarnAt = 0;
+  function warnOffKey() {
+    const now = performance.now();
+    if (now - offWarnAt < 1600) return;
+    offWarnAt = now;
+    showToast("🔒 最上面那一排（esc / F 键 / del）被锁住了哦～");
+  }
+
+  function emojiFor(key) {
+    if (key === " ") return DRUM_EMOJI[" "];
+    if (DIGITS.includes(key)) return DRUM_EMOJI[key];
+    if (FKEY_RE.test(key)) return FKEY_EMOJI(key);
+    if (SPECIAL_EMOJI[key]) return SPECIAL_EMOJI[key];
+    const i = LETTERS.indexOf(key);
+    if (i >= 0) return THEMES[theme].letters[i];
+    return "🎈";
+  }
+  function FKEY_EMOJI(key) {
+    return ["🔔","🎸","🪗","🎺","🎻","🪕","🥁","🎹","🎷","🪘","🎤","🪇"][parseInt(key.slice(1), 10) - 1];
+  }
+
+  function refreshTiles() {
+    for (const key of Object.keys(tileEmojiEls)) {
+      tileEmojiEls[key].textContent = isOffKey(key) ? "🔒" : emojiFor(key);
+    }
+    document.querySelector(".tip").textContent = THEMES[theme].tip;
+    document.querySelectorAll(".tile").forEach(applyTileColor);
+  }
+
+  /* 按当前主题给贴片上色（修复之前 var(--cN) 未定义导致底色过淡的问题） */
+  function applyTileColor(el) {
+    const cols = THEMES[theme].colors;
+    const ci = (+el.dataset.ci) % cols.length;
+    el.style.setProperty("--tile", cols[ci]);
+  }
+
+  /* =====================================================
+     4. 矢量动画角色库（canvas 实时绘制，全部自带动画）
+     ===================================================== */
+  const canvas = document.getElementById("fx");
+  const stageCtx = canvas.getContext("2d");
+  let c2d = stageCtx; /* 允许临时切换到图标画布，复用同一套角色绘制函数 */
+  /* 键盘贴片图标专用画布：独立重绘，避免与舞台粒子互相清屏 */
+  const iconCanvas = document.getElementById("icons");
+  const ic2d = iconCanvas.getContext("2d");
+
+  function shade(hex, f) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    if (f >= 0) { r += (255 - r) * f; g += (255 - g) * f; b += (255 - b) * f; }
+    else { r *= 1 + f; g *= 1 + f; b *= 1 + f; }
+    return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+  }
+  function ell(x, y, rx, ry, col, rot) {
+    c2d.fillStyle = col;
+    c2d.beginPath();
+    c2d.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot || 0, 0, 6.3);
+    c2d.fill();
+  }
+  function cir(x, y, r, col) { ell(x, y, r, r, col, 0); }
+  function poly(pts, col) {
+    c2d.fillStyle = col;
+    c2d.beginPath();
+    c2d.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) c2d.lineTo(pts[i][0], pts[i][1]);
+    c2d.closePath(); c2d.fill();
+  }
+  function ln(x1, y1, x2, y2, col, w) {
+    c2d.strokeStyle = col; c2d.lineWidth = w || 3; c2d.lineCap = "round";
+    c2d.beginPath(); c2d.moveTo(x1, y1); c2d.lineTo(x2, y2); c2d.stroke();
+  }
+  function rrect(x, y, w, h, r, col) {
+    c2d.fillStyle = col; c2d.beginPath();
+    if (c2d.roundRect) c2d.roundRect(x, y, w, h, r); else c2d.rect(x, y, w, h);
+    c2d.fill();
+  }
+  function eye(x, y, r, t, ph) {
+    const blink = ((t + (ph || 0)) % 3.7) > 3.55;
+    if (blink) ln(x - r, y, x + r, y, "#25252d", 2.4);
+    else { cir(x, y, r, "#25252d"); cir(x + r * 0.32, y - r * 0.32, r * 0.36, "#ffffff"); }
+  }
+  function wig(a, f, t) { return Math.sin(t * f + a); }
+
+  /* 每个角色在自己的 100×100 局部坐标里绘制，全部自带循环动画 */
+  const CREATURES = {
+    fish(t, col) {
+      const d = shade(col, -0.3);
+      poly([[-20, 0], [-40, -13 + wig(0, 7, t) * 5], [-40, 13]], d);
+      ell(0, 0, 26, 17, col);
+      poly([[-6, -14], [2, -27], [10, -13]], d);
+      ell(2, 7, 8, 4.5, d, wig(1, 6, t) * 0.4);
+      eye(13, -4, 4, t);
+      ln(20, 5, 25, 7, d, 2);
+    },
+    octopus(t, col) {
+      const d = shade(col, -0.25);
+      for (let i = 0; i < 4; i++) {
+        const bx = -14 + i * 9, w = wig(i * 1.4, 5, t) * 8;
+        c2d.strokeStyle = d; c2d.lineWidth = 6.5; c2d.lineCap = "round";
+        c2d.beginPath(); c2d.moveTo(bx, 4);
+        c2d.quadraticCurveTo(bx - w, 18, bx + w, 30);
+        c2d.stroke();
+      }
+      ell(0, -8, 20, 17, col);
+      eye(-7, -11, 3.5, t, 0); eye(7, -11, 3.5, t, 0.3);
+      cir(-9, -2, 2.2, shade(col, 0.5)); cir(9, -2, 2.2, shade(col, 0.5));
+    },
+    crab(t, col) {
+      const d = shade(col, -0.3);
+      for (const s of [-1, 1]) for (let i = 0; i < 3; i++)
+        ln(s * 11, 6 + i * 3, s * (23 + i * 4), 13 + i * 3, d, 2.6);
+      for (const s of [-1, 1]) {
+        const pinch = Math.sin(t * 9 + s) * 4;
+        ell(s * 25, -4, 9, 7, col);
+        cir(s * 29, -4 - pinch, 3.2, d);
+      }
+      ln(-6, -10, -6, -17, d, 2.6); ln(6, -10, 6, -17, d, 2.6);
+      eye(-6, -20, 3.4, t, 0); eye(6, -20, 3.4, t, 0.4);
+      ell(0, 4, 18, 12, col);
+      cir(0, 9, 2, shade(col, 0.5));
+    },
+    jelly(t, col) {
+      const pulse = 1 + Math.sin(t * 4.5) * 0.14;
+      ell(0, -6, 20 * pulse, 15 / pulse, col);
+      ell(0, 4, 17, 4, shade(col, -0.2));
+      for (let i = 0; i < 4; i++) {
+        const bx = -12 + i * 8, w = wig(i, 4, t) * 6;
+        c2d.strokeStyle = shade(col, 0.25); c2d.lineWidth = 4; c2d.lineCap = "round";
+        c2d.beginPath(); c2d.moveTo(bx, 8);
+        c2d.quadraticCurveTo(bx + w, 18, bx - w, 28);
+        c2d.stroke();
+      }
+      eye(-6, -9, 3, t, 0); eye(6, -9, 3, t, 0.5);
+    },
+    turtle(t, col) {
+      const d = shade(col, -0.25);
+      ell(-14, 8, 6, 10, d, Math.sin(t * 4) * 0.5);
+      ell(16, 9, 6, 10, d, -Math.sin(t * 4 + 1) * 0.5);
+      cir(24, -2, 9, col);
+      eye(27, -4, 2.6, t);
+      cir(0, -2, 20, col);
+      cir(0, -2, 13, d);
+      ln(-9, -2, 9, -2, shade(col, 0.3), 2); ln(0, -11, 0, 7, shade(col, 0.3), 2);
+    },
+    bird(t, col) {
+      const d = shade(col, -0.25);
+      poly([[-13, 0], [-25, -5 + wig(0, 9, t) * 3], [-22, 6]], d);
+      ell(0, 2, 15, 12, col);
+      ell(0, 8, 8, 5, shade(col, 0.4));
+      c2d.save(); c2d.translate(-1, -3); c2d.rotate(Math.sin(t * 13) * 0.7 - 0.3);
+      ell(0, -8, 6, 11, d); c2d.restore();
+      poly([[13, 0], [22, 3], [13, 6]], "#ffb84d");
+      eye(8, -4, 3.2, t);
+    },
+    butterfly(t, col) {
+      const flap = 0.3 + 0.7 * Math.abs(Math.sin(t * 9));
+      for (const s of [-1, 1]) {
+        c2d.save(); c2d.translate(s * 2, 0); c2d.scale(s * flap, 1);
+        ell(11, -5, 11, 9, col);
+        ell(9, 7, 8, 7, shade(col, 0.3));
+        c2d.restore();
+      }
+      ell(0, 0, 3.5, 13, "#54432a");
+      ln(0, -12, -6, -22, "#54432a", 2); ln(0, -12, 6, -22, "#54432a", 2);
+      cir(-6, -22, 1.8, col); cir(6, -22, 1.8, col);
+    },
+    bee(t, col) {
+      const d = "#3a3a3a";
+      for (const s of [-1, 1]) {
+        c2d.save(); c2d.translate(s * 5, -12); c2d.rotate(Math.sin(t * 40) * 0.5);
+        ell(0, 0, 7.5, 3.5, "rgba(210,235,255,.85)"); c2d.restore();
+      }
+      ell(2, 0, 14, 10, col);
+      ell(-2, 0, 3.6, 9, d); ell(5, 0, 3.6, 9, d);
+      poly([[15, -2], [22, 0], [15, 2]], d);
+      cir(-12, -2, 6, d);
+      eye(-13, -3, 2.2, t);
+    },
+    bunny(t, col) {
+      for (const s of [-1, 1]) {
+        c2d.save(); c2d.translate(s * 7, -13); c2d.rotate(wig(s, 3, t) * 0.14 + s * 0.16);
+        ell(0, -10, 5.5, 13, col);
+        ell(0, -10, 2.8, 9, "#ffb3c8");
+        c2d.restore();
+      }
+      cir(0, 7, 14, col);
+      eye(-5, 4, 3, t, 0); eye(5, 4, 3, t, 0.2);
+      cir(0, 11, 2.2, "#ff7f9e");
+      ln(-3, 14, 0, 15, "#a86a72", 2); ln(0, 15, 3, 14, "#a86a72", 2);
+      cir(-9, 11, 2.5, shade(col, 0.45)); cir(9, 11, 2.5, shade(col, 0.45));
+    },
+    cat(t, col) {
+      const d = shade(col, -0.25);
+      c2d.strokeStyle = col; c2d.lineWidth = 6; c2d.lineCap = "round";
+      c2d.beginPath(); c2d.moveTo(14, 8);
+      c2d.quadraticCurveTo(27, 4 + wig(0, 4, t) * 9, 31, -7 + wig(1, 4, t) * 11);
+      c2d.stroke();
+      poly([[-14, -6], [-7, -21], [-2, -8]], col);
+      poly([[14, -6], [7, -21], [2, -8]], col);
+      poly([[-11, -8], [-7, -16], [-4, -9]], "#ffb3c8");
+      poly([[11, -8], [7, -16], [4, -9]], "#ffb3c8");
+      cir(0, 0, 15, col);
+      eye(-6, -3, 3.2, t, 0); eye(6, -3, 3.2, t, 0.25);
+      cir(0, 6, 2.2, "#ff7f9e");
+      ln(-11, 4, -20, 2, d, 2); ln(-11, 7, -20, 8, d, 2);
+      ln(11, 4, 20, 2, d, 2); ln(11, 7, 20, 8, d, 2);
+    },
+    bear(t, col) {
+      cir(-11, -12, 6.5, col); cir(11, -12, 6.5, col);
+      cir(-11, -12, 3.4, shade(col, -0.3)); cir(11, -12, 3.4, shade(col, -0.3));
+      cir(0, 0, 16, col);
+      ell(0, 7, 8.5, 6, shade(col, 0.45));
+      cir(0, 3.5, 2.6, "#4a3b32");
+      eye(-6, -4, 3, t, 0); eye(6, -4, 3, t, 0.3);
+      ln(-2, 9, 0, 11, "#4a3b32", 2); ln(0, 11, 2, 9, "#4a3b32", 2);
+    },
+    star(t, col) {
+      const rot = t * 1.2, R = 26 * (1 + Math.sin(t * 5) * 0.06);
+      const pts = [];
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 ? R * 0.45 : R;
+        const a = rot + i * Math.PI / 5 - Math.PI / 2;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+      poly(pts, col);
+      poly(pts.map(p => [p[0] * 0.5, p[1] * 0.5 - 2]), shade(col, 0.4));
+      c2d.globalAlpha = 0.5 + 0.5 * Math.sin(t * 6);
+      cir(-R * 0.7, -R * 0.7, 3, "#ffffff");
+      c2d.globalAlpha = 1;
+    },
+    rocket(t, col) {
+      const fl = 9 + Math.sin(t * 30) * 3 + Math.random() * 2;
+      poly([[-6, 28], [0, 28 + fl], [6, 28]], "#ff9f43");
+      poly([[-3, 28], [0, 28 + fl * 0.6], [3, 28]], "#ffd93d");
+      poly([[-11, 14], [-22, 28], [-9, 26]], shade(col, -0.3));
+      poly([[11, 14], [22, 28], [9, 26]], shade(col, -0.3));
+      ell(0, 0, 11, 26, col);
+      poly([[-11, -19], [0, -36], [11, -19]], "#ff5f5f");
+      cir(0, -6, 6, "#bfe6ff");
+      c2d.strokeStyle = shade(col, -0.3); c2d.lineWidth = 2.5;
+      c2d.beginPath(); c2d.arc(0, -6, 6.5, 0, 6.3); c2d.stroke();
+    },
+    ufo(t, col) {
+      c2d.save(); c2d.rotate(Math.sin(t * 2) * 0.1);
+      ell(0, -8, 13, 11, "rgba(190,230,255,.9)");
+      ell(0, -8, 8, 7, "rgba(255,255,255,.5)");
+      ell(0, 6, 30, 10, col);
+      ell(0, 10, 25, 6, shade(col, -0.25));
+      for (let i = 0; i < 3; i++) {
+        const on = (Math.floor(t * 3) + i) % 3 === 0;
+        cir(-14 + i * 14, 8, 3.4, on ? "#ff5f5f" : "#ffd93d");
+      }
+      c2d.restore();
+    },
+    robot(t, col) {
+      const d = shade(col, -0.3);
+      ln(0, -24, 0, -32, d, 3);
+      c2d.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 4));
+      cir(0, -34, 3.6, "#ff5f5f");
+      c2d.globalAlpha = 1;
+      rrect(-16, -24, 32, 32, 7, col);
+      rrect(-12, -20, 24, 12, 4, shade(col, -0.4));
+      const blink = (t % 3) > 2.85;
+      if (blink) { ln(-11, -14, -3, -14, "#7CFCFF", 2.5); ln(3, -14, 11, -14, "#7CFCFF", 2.5); }
+      else { rrect(-11, -18, 8, 8, 2, "#7CFCFF"); rrect(3, -18, 8, 8, 2, "#7CFCFF"); }
+      c2d.strokeStyle = d; c2d.lineWidth = 2.2;
+      c2d.beginPath(); c2d.moveTo(-8, 0); c2d.lineTo(-4, 3); c2d.lineTo(0, 0); c2d.lineTo(4, 3); c2d.lineTo(8, 0); c2d.stroke();
+    },
+    car(t, col) {
+      const bounce = Math.sin(t * 10) * 1.6;
+      c2d.save(); c2d.translate(0, bounce * 0.5);
+      rrect(-17, -21, 30, 15, 6, shade(col, -0.15));
+      rrect(-13, -18, 10, 9, 2, "#bfe6ff");
+      rrect(0, -18, 9, 9, 2, "#bfe6ff");
+      rrect(-30, -9, 60, 18, 7, col);
+      cir(28, 0, 3, "#ffd93d"); cir(-28, 0, 2.5, "#ff8a8a");
+      c2d.restore();
+      for (const s of [-1, 1]) {
+        cir(s * 18, 12, 9, "#2a2a33");
+        c2d.save(); c2d.translate(s * 18, 12); c2d.rotate(t * 7);
+        ln(-6, 0, 6, 0, "#9aa0ab", 2); ln(0, -6, 0, 6, "#9aa0ab", 2);
+        c2d.restore();
+        cir(s * 18, 12, 3, "#9aa0ab");
+      }
+    },
+    bus(t, col) {
+      rrect(-36, -16, 72, 28, 8, col);
+      for (let i = 0; i < 3; i++) rrect(-28 + i * 18, -12, 13, 10, 2, "#bfe6ff");
+      ln(-36, 4, 36, 4, shade(col, 0.4), 3);
+      cir(-34, -8, 2.5, "#ffd93d"); cir(34, -8, 2.5, "#ffd93d");
+      for (const s of [-1, 1]) {
+        cir(s * 22, 14, 8, "#2a2a33");
+        c2d.save(); c2d.translate(s * 22, 14); c2d.rotate(t * 6);
+        ln(-5, 0, 5, 0, "#9aa0ab", 2); c2d.restore();
+      }
+    },
+    traffic(t, col) {
+      ln(0, 12, 0, 34, "#565b66", 5);
+      rrect(-11, -32, 22, 46, 7, col);
+      const cols = ["#ff5f5f", "#ffd93d", "#4ee0c2"];
+      const active = Math.floor(t * 1.5) % 3;
+      for (let i = 0; i < 3; i++) {
+        const ly = -22 + i * 14;
+        if (i === active) {
+          c2d.globalAlpha = 0.35; cir(0, ly, 9.5, cols[i]); c2d.globalAlpha = 1;
+          cir(0, ly, 5.5, cols[i]);
+        } else cir(0, ly, 5.5, shade(cols[i], -0.55));
+      }
+    },
+    dino(t, col) {
+      const d = shade(col, -0.25);
+      const sway = wig(0, 3, t) * 5;
+      poly([[-16, -2], [-32, -10 + sway], [-34, 4], [-16, 6]], col);
+      ell(0, 2, 22, 15, col);
+      ell(-8, 18 + Math.sin(t * 6) * 1.5, 6, 5, d);
+      ell(8, 18 + Math.cos(t * 6) * 1.5, 6, 5, d);
+      for (let i = 0; i < 3; i++)
+        poly([[-8 + i * 9, -11], [-4 + i * 9, -19], [0 + i * 9, -10]], "#ffd93d");
+      cir(24, -12, 10, col);
+      ell(31, -9, 7, 5, shade(col, -0.1));
+      eye(26, -15, 2.8, t);
+      ln(28, -4, 31, -3, d, 2);
+    },
+    egg(t, col) {
+      c2d.save(); c2d.rotate(Math.sin(t * 5) * 0.18);
+      ell(0, 0, 16, 21, col);
+      cir(-5, -8, 3.2, shade(col, -0.3));
+      cir(6, 3, 2.6, shade(col, -0.3));
+      cir(-2, 11, 2, shade(col, -0.3));
+      c2d.strokeStyle = "#8a5a2a"; c2d.lineWidth = 1.8;
+      c2d.beginPath();
+      c2d.moveTo(-9, 0); c2d.lineTo(-4, 3); c2d.lineTo(0, -1); c2d.lineTo(4, 3); c2d.lineTo(9, 0);
+      c2d.stroke();
+      c2d.restore();
+    },
+    lollipop(t, col) {
+      ln(0, 8, 0, 34, "#e8c9a0", 5.5);
+      cir(0, -8, 20, col);
+      c2d.strokeStyle = shade(col, -0.3); c2d.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        c2d.beginPath();
+        c2d.arc(0, -8, 5 + i * 5.5, t * 2 + i, t * 2 + i + 4.2);
+        c2d.stroke();
+      }
+      c2d.globalAlpha = 0.5; cir(-7, -15, 4, "#ffffff"); c2d.globalAlpha = 1;
+    },
+    cupcake(t, col) {
+      poly([[0, -24], [-3, -19], [3, -19]], "#ffb84d");
+      ln(0, -19, 0, -16, "#88c9ff", 3);
+      ell(0, 2, 17, 10, col);
+      ell(0, -3, 12, 7, shade(col, 0.3));
+      ell(0, -8, 7, 4.5, shade(col, 0.5));
+      cir(0, -14, 4, "#ff5f6e");
+      poly([[-16, 8], [16, 8], [12, 28], [-12, 28]], "#e8a15a");
+      ln(-11, 12, -9, 26, "#c9823f", 2.5); ln(0, 12, 0, 26, "#c9823f", 2.5); ln(11, 12, 9, 26, "#c9823f", 2.5);
+    },
+    donut(t, col) {
+      cir(0, 0, 22, "#e8b06a");
+      cir(0, 0, 18, col);
+      const cols = ["#ff5f6e", "#ffd93d", "#4ec3ff", "#7ed957", "#b78bfb"];
+      for (let i = 0; i < 9; i++) {
+        const a = i * 0.78 + t * 0.5;
+        const r = 12.5;
+        c2d.save();
+        c2d.translate(Math.cos(a) * r, Math.sin(a) * r);
+        c2d.rotate(a * 2 + i);
+        c2d.fillStyle = cols[i % cols.length];
+        c2d.fillRect(-3, -1.2, 6, 2.4);
+        c2d.restore();
+      }
+      cir(0, 0, 7, shade("#e8b06a", -0.4));
+    },
+    flower(t, col) {
+      for (let i = 0; i < 6; i++) {
+        c2d.save();
+        c2d.rotate(t * 0.8 + i * Math.PI / 3);
+        ell(0, -12, 6.5, 11, i % 2 ? col : shade(col, 0.25));
+        c2d.restore();
+      }
+      cir(0, 0, 7.5, "#ffd93d");
+      cir(0, 0, 4, shade("#ffd93d", -0.2));
+    },
+    balloon(t, col) {
+      ell(0, -6, 16, 20, col);
+      ell(-5, -13, 4.5, 7.5, "rgba(255,255,255,.55)");
+      poly([[-4, 14], [4, 14], [0, 18]], shade(col, -0.2));
+      c2d.strokeStyle = "#9aa0ab"; c2d.lineWidth = 1.6;
+      c2d.beginPath();
+      c2d.moveTo(0, 18);
+      c2d.quadraticCurveTo(wig(0, 3, t) * 8, 28, wig(1, 3, t) * 6, 38);
+      c2d.stroke();
+    },
+    snail(t, col) {
+      const d = shade(col, -0.3);
+      const crawl = Math.sin(t * 3) * 0.1;
+      ell(-8, 14, 18, 7, d);
+      cir(-26, 13, 6, d);
+      ln(-27, 8, -29, 0, d, 2.4); ln(-24, 8, -22, 0, d, 2.4);
+      eye(-29, -1, 2.4, t, 0); eye(-22, -1, 2.4, t, 0.3);
+      c2d.save(); c2d.translate(6, 4); c2d.scale(1 + crawl, 1);
+      cir(0, 0, 15, col);
+      c2d.strokeStyle = shade(col, -0.35); c2d.lineWidth = 2.6;
+      c2d.beginPath(); c2d.arc(0, 0, 12, t * 1.5, t * 1.5 + 4.6); c2d.stroke();
+      c2d.beginPath(); c2d.arc(0, 0, 8, t * 1.5 + 0.6, t * 1.5 + 4); c2d.stroke();
+      c2d.beginPath(); c2d.arc(0, 0, 4, t * 1.5 + 1.2, t * 1.5 + 3.4); c2d.stroke();
+      c2d.restore();
+    },
+    note(t, col) {
+      c2d.save(); c2d.rotate(Math.sin(t * 4) * 0.15);
+      ell(-7, 14, 10.5, 7.5, col, -0.3);
+      ln(3, 13, 3, -18, col, 4.5);
+      poly([[3, -18], [16, -11], [3, -6]], shade(col, 0.3));
+      eye(-9, 12, 2.6, t);
+      c2d.restore();
+    }
+  };
+
+  function drawCreature(type, color, x, y, size, t, o) {
+    const fn = CREATURES[type];
+    if (!fn) return;
+    o = o || {};
+    const sq = o.squash || 0;
+    const br = 1 + Math.sin(t * 2.6 + (o.phase || 0)) * 0.04;
+    c2d.save();
+    c2d.translate(x, y);
+    if (o.rot) c2d.rotate(o.rot);
+    c2d.scale((size / 100) * (1 + sq * 0.25) * br, (size / 100) * (1 - sq * 0.3) * (2 - br));
+    if (o.alpha !== undefined) c2d.globalAlpha = Math.max(0, Math.min(1, o.alpha));
+    try { fn(t, color, o); } catch (e) { /* 单个角色异常不影响整体 */ }
+    c2d.restore();
+  }
+
+  /* =====================================================
+     4.5 键盘贴片图标：复用同一套矢量角色，缩到按键上实时动画
+     ===================================================== */
+  let tileRects = null;
+
+  function tileCreature(key) {
+    const th = THEMES[theme];
+    if (key === " ") return { type: "note", color: th.colors[0] };
+    const di = DIGITS.indexOf(key);
+    if (di >= 0) return { type: "note", color: th.colors[di % th.colors.length] };
+    const li = LETTERS.indexOf(key);
+    if (li >= 0) return { type: th.creatures[li], color: th.colors[li % th.colors.length] };
+    if (FKEY_RE.test(key)) {
+      const idx = parseInt(key.slice(1), 10) - 1;
+      return { type: "star", color: th.colors[idx % th.colors.length] };
+    }
+    if (SPECIAL_EMOJI[key]) return { type: "star", color: th.colors[4] };
+    return { type: "note", color: th.colors[1] };
+  }
+
+  function measureTileRects() {
+    const list = [];
+    for (const key of Object.keys(tiles)) {
+      if (isOffKey(key)) continue;          /* 锁定键不画动画角色，露出 🔒 */
+      const tileEl = tiles[key];
+      const emEl = tileEmojiEls[key] || tileEl;
+      const tr = tileEl.getBoundingClientRect();
+      const er = emEl.getBoundingClientRect();
+      if (tr.width < 4 || tr.height < 4) continue;
+      list.push({
+        key,
+        x: er.left + er.width / 2,
+        y: er.top + er.height / 2,
+        s: Math.max(12, Math.min(tr.height * 0.8, tr.width * 0.5)),
+        ph: ((key.charCodeAt(0) * 0.37) % 6.283)
+      });
+    }
+    tileRects = list;
+  }
+
+  function drawTileIcons(t) {
+    if (!tileRects) return;
+    for (let i = 0; i < tileRects.length; i++) {
+      const r = tileRects[i];
+      const c = tileCreature(r.key);
+      /* 柔光底衬，让深色小角色在彩色键面上更清晰 */
+      ic2d.beginPath();
+      ic2d.arc(r.x, r.y, r.s * 0.5, 0, 6.283);
+      ic2d.fillStyle = "rgba(255,255,255,.22)";
+      ic2d.fill();
+      drawCreature(c.type, c.color, r.x, r.y, r.s, t + r.ph, {});
+    }
+  }
+
+  /* 独立循环：30fps 重绘一次（与舞台画布互不清屏，省一半开销） */
+  let iconFrame = 0;
+  function iconLoop(ts) {
+    requestAnimationFrame(iconLoop);
+    if ((iconFrame++ & 1) === 1) return;
+    c2d = ic2d;
+    ic2d.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    drawTileIcons(ts / 1000);
+    c2d = stageCtx;
+  }
+
+  /* =====================================================
+     5. 画布主循环：环境粒子 + 地面装饰 + 道具 + 吉祥物 + 弹跳精灵 + 彩屑
+     ===================================================== */
+  let fxStarted = false;
+
+  function sizeCanvas() {
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * devicePixelRatio;
+    canvas.height = h * devicePixelRatio;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    c2d.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
+    iconCanvas.width = w * devicePixelRatio;
+    iconCanvas.height = h * devicePixelRatio;
+    iconCanvas.style.width = w + "px";
+    iconCanvas.style.height = h + "px";
+    ic2d.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  window.addEventListener("resize", () => { sizeCanvas(); measureTileRects(); });
+  sizeCanvas();
+
+  const GROUND_H = 54;
+  let ambient = [];
+  function initAmbient() {
+    ambient = [];
+    for (let i = 0; i < 16; i++) {
+      ambient.push({
+        x: Math.random(), y: Math.random(),
+        s: 0.6 + Math.random() * 0.8,
+        ph: Math.random() * 7,
+        sp: 0.4 + Math.random() * 0.9
+      });
+    }
+  }
+
+  function measureStageRect() {
+    const r = document.getElementById("stage").getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  }
+
+  function drawAmbient(t, st) {
+    const style = THEMES[theme].ambient;
+    const cols = THEMES[theme].colors;
+    for (const a of ambient) {
+      if (style === "bubbles") {
+        const y = st.bottom - ((t * a.sp * 26 + a.ph * 90) % st.height);
+        const x = st.left + a.x * st.width + Math.sin(t * 2 + a.ph) * 9;
+        c2d.strokeStyle = "rgba(255,255,255,.55)"; c2d.lineWidth = 1.6;
+        c2d.beginPath(); c2d.arc(x, y, 3 + a.s * 5, 0, 6.3); c2d.stroke();
+      } else if (style === "stars") {
+        const x = st.left + a.x * st.width, y = st.top + a.y * st.height;
+        const al = 0.25 + 0.75 * Math.abs(Math.sin(t * 2 + a.ph));
+        const s = 3 + a.s * 4;
+        c2d.globalAlpha = al;
+        ln(x - s, y, x + s, y, "#ffe9a8", 1.6); ln(x, y - s, x, y + s, "#ffe9a8", 1.6);
+        cir(x, y, 1.6, "#fff8dc");
+        c2d.globalAlpha = 1;
+      } else if (style === "petals") {
+        const y = st.top + ((a.y * st.height + t * a.sp * 24) % st.height);
+        const x = st.left + a.x * st.width + Math.sin(t * 1.5 + a.ph) * 16;
+        drawCreature("flower", cols[Math.floor(a.ph * 10) % cols.length], x, y, 10 + a.s * 8, t, { alpha: 0.55, phase: a.ph });
+      } else if (style === "gum") {
+        const x = st.left + a.x * st.width + Math.sin(t * 0.8 + a.ph) * 20;
+        const y = st.top + a.y * st.height + Math.sin(t * 1.1 + a.ph) * 12;
+        cir(x, y, 5 + a.s * 6, cols[Math.floor(a.ph * 10) % cols.length]);
+        c2d.globalAlpha = 0.5; cir(x - 2, y - 2, 2.4, "#ffffff"); c2d.globalAlpha = 1;
+      } else if (style === "clouds") {
+        const x = st.left + ((a.x * st.width + t * a.sp * 18) % (st.width + 140)) - 70;
+        const y = st.top + 24 + a.y * st.height * 0.45;
+        c2d.globalAlpha = 0.55;
+        cir(x, y, 13 * a.s, "#ffffff"); cir(x + 14 * a.s, y - 5, 10 * a.s, "#ffffff"); cir(x - 13 * a.s, y + 1, 9 * a.s, "#ffffff");
+        c2d.globalAlpha = 1;
+      } else if (style === "leaves") {
+        const y = st.top + ((a.y * st.height + t * a.sp * 26) % st.height);
+        const x = st.left + a.x * st.width + Math.sin(t * 1.4 + a.ph) * 20;
+        c2d.save(); c2d.translate(x, y); c2d.rotate(Math.sin(t * 2 + a.ph) * 0.9);
+        ell(0, 0, 4 + a.s * 4, 8 + a.s * 3, "#7cb85c"); c2d.restore();
+      }
+    }
+  }
+
+  function drawGroundDecor(t, st) {
+    const style = THEMES[theme].groundStyle;
+    const gy = st.bottom - GROUND_H;
+    const gw = st.width;
+    if (style === "dashes") {
+      const sp = 96, off = (t * 70) % sp;
+      for (let x = -off; x < gw; x += sp)
+        rrect(st.left + x, gy + GROUND_H / 2 - 3, 46, 6, 3, "rgba(255,255,255,.75)");
+    } else if (style === "grass" || style === "ferns") {
+      const big = style === "ferns";
+      const n = Math.ceil(gw / 34);
+      for (let i = 0; i < n; i++) {
+        const bx = st.left + i * 34 + 12;
+        const sway = Math.sin(t * 2 + i * 0.9) * (big ? 6 : 4);
+        for (let b = -1; b <= 1; b++) {
+          c2d.strokeStyle = big ? "#3e7a36" : "#57a448";
+          c2d.lineWidth = big ? 4 : 3; c2d.lineCap = "round";
+          c2d.beginPath();
+          c2d.moveTo(bx + b * 4, st.bottom - 4);
+          c2d.quadraticCurveTo(bx + b * 4 + sway * 0.5, st.bottom - (big ? 18 : 12), bx + b * 5 + sway, st.bottom - (big ? 30 : 20));
+          c2d.stroke();
+        }
+      }
+    } else if (style === "sprinkles") {
+      const cols = THEMES[theme].colors;
+      const n = Math.ceil(gw / 42);
+      for (let i = 0; i < n; i++) {
+        const x = st.left + i * 42 + 16, y = gy + 10 + ((i * 37) % 34);
+        c2d.save(); c2d.translate(x, y); c2d.rotate(t * 1.5 + i);
+        c2d.fillStyle = cols[i % cols.length];
+        c2d.fillRect(-4, -1.5, 8, 3);
+        c2d.restore();
+      }
+    } else if (style === "pebbles") {
+      const n = Math.ceil(gw / 46);
+      for (let i = 0; i < n; i++) {
+        cir(st.left + i * 46 + 18, gy + 16 + ((i * 53) % 22), 3 + ((i * 7) % 4), "rgba(180,190,220,.5)");
+      }
+    } else if (style === "seaweed") {
+      const n = Math.ceil(gw / 52);
+      for (let i = 0; i < n; i++) {
+        const bx = st.left + i * 52 + 20;
+        const sway = Math.sin(t * 1.6 + i) * 7;
+        c2d.strokeStyle = "#2e8b6e"; c2d.lineWidth = 5; c2d.lineCap = "round";
+        c2d.beginPath();
+        c2d.moveTo(bx, st.bottom - 2);
+        c2d.quadraticCurveTo(bx + sway * 0.6, st.bottom - 24, bx + sway, st.bottom - 44);
+        c2d.stroke();
+        cir(bx + sway, st.bottom - 46, 3, "#3fae8a");
+      }
+    }
+  }
+
+  function drawProps(t, st) {
+    const props = THEMES[theme].props;
+    for (const p of props) {
+      let x = st.left + (p.x / 100) * st.width;
+      let y = st.top + (p.y / 100) * st.height;
+      let rot = 0;
+      if (p.m === "bob") y += Math.sin(t * 2 + p.x) * 10;
+      else if (p.m === "drift") x += Math.sin(t * 1.3 + p.y) * 18;
+      else if (p.m === "sway") rot = Math.sin(t * 1.8 + p.x) * 0.22;
+      drawCreature(p.t, p.c, x, y, p.s * 1.6, t, { rot, phase: p.x });
+    }
+  }
+
+  let mascotState = null;   // {type,color,until,happyUntil}
+  function drawMascot(t, st) {
+    const th = THEMES[theme];
+    let type = th.mascot.type, color = th.mascot.color;
+    const nowMs = performance.now();
+    let happy = false;
+    if (mascotState && nowMs < mascotState.until) {
+      type = mascotState.type; color = mascotState.color;
+      happy = nowMs < mascotState.happyUntil;
+    }
+    let scale = 1;
+    if (happy) {
+      const k = Math.min(1, 1 - (mascotState.happyUntil - nowMs) / 400);
+      scale = 1 + 0.25 * Math.sin(k * Math.PI);
+    }
+    const size = Math.min(st.height * 0.48, 196) * scale;
+    drawCreature(type, color, st.left + st.width / 2, st.top + st.height * 0.52, size, t, { phase: 1 });
+  }
+
+  /* ---------- 弹跳小精灵 ---------- */
+  let bouncers = [];
+  let stageFloor = 600, stageLeftB = 24, stageRightB = 1256;
+
+  function spawnBouncer(entry, x, y) {
+    x = Math.min(Math.max(x, stageLeftB + 16), stageRightB - 16);
+    bouncers.push({
+      type: entry.type, color: entry.color,
+      x, y: Math.min(y, stageFloor - 10),
+      vx: (Math.random() - 0.5) * 5.2,
+      vy: -(Math.random() * 6 + 6.5),
+      rot: (Math.random() - 0.5) * 0.5,
+      vr: (Math.random() - 0.5) * 0.14,
+      size: 52 + Math.random() * 32,
+      born: performance.now(),
+      dieAt: performance.now() + 8000 + Math.random() * 3000,
+      squash: 0,
+      phase: Math.random() * 7
+    });
+    if (bouncers.length > 16) bouncers.shift();
+  }
+
+  function updateBouncers(t) {
+    const now = performance.now();
+    const alive = [];
+    for (const b of bouncers) {
+      b.vy += 0.38;
+      b.x += b.vx;
+      b.y += b.vy;
+      if (b.y > stageFloor) {
+        b.y = stageFloor;
+        b.vy *= -0.72;
+        b.squash = 1;
+        b.vr = (Math.random() - 0.5) * 0.3;
+        if (Math.abs(b.vy) < 1.4) b.vy = -(Math.random() * 5 + 4.5);
+      }
+      if (b.x < stageLeftB + 16) { b.x = stageLeftB + 16; b.vx = Math.abs(b.vx); }
+      if (b.x > stageRightB - 16) { b.x = stageRightB - 16; b.vx = -Math.abs(b.vx); }
+      b.rot += b.vr;
+      b.squash *= 0.85;
+
+      const fadeIn = Math.min(1, (now - b.born) / 200);
+      const fadeOut = Math.min(1, (b.dieAt - now) / 700);
+      const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
+      if (alpha <= 0) continue;
+      alive.push(b);
+
+      const age = now - b.born;
+      const pop = age < 260 ? 1 + 0.55 * Math.sin((age / 260) * Math.PI) : 1;
+
+      drawCreature(b.type, b.color, b.x, b.y, b.size * pop, t, {
+        alpha, squash: b.squash, rot: b.rot + Math.sin(t / 0.35 + b.phase) * 0.14, phase: b.phase
+      });
+    }
+    bouncers = alive;
+  }
+
+  /* ---------- 彩屑粒子 ---------- */
+  let particles = [];
+  const FX_COLORS = ["#ff8a9b", "#ffb56b", "#ffd93d", "#7ed957", "#5ec8f8", "#b78bfb", "#ffffff"];
+
+  function burst(x, y, n, big) {
+    n = n || 26;
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = (big ? 5 : 3.4) + Math.random() * (big ? 7 : 4.5);
+      particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 2.5,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.3,
+        size: Math.random() * (big ? 9 : 7) + 4,
+        color: FX_COLORS[Math.floor(Math.random() * FX_COLORS.length)],
+        life: 1,
+        decay: Math.random() * 0.012 + 0.014
+      });
+    }
+    if (particles.length > 420) particles = particles.slice(-420);
+  }
+
+  function confettiRain() {
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: -20 - Math.random() * 140,
+        vx: (Math.random() - 0.5) * 2,
+        vy: Math.random() * 3 + 2,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.25,
+        size: Math.random() * 8 + 5,
+        color: FX_COLORS[Math.floor(Math.random() * FX_COLORS.length)],
+        life: 1,
+        decay: Math.random() * 0.006 + 0.006
+      });
+    }
+  }
+
+  function updateParticles() {
+    const alive = [];
+    for (const p of particles) {
+      p.vy += 0.22;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= p.decay;
+      if (p.life <= 0 || p.y > window.innerHeight + 40) continue;
+      alive.push(p);
+      c2d.save();
+      c2d.globalAlpha = Math.min(1, p.life * 1.6);
+      c2d.translate(p.x, p.y);
+      c2d.rotate(p.rot);
+      c2d.fillStyle = p.color;
+      c2d.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+      c2d.restore();
+    }
+    particles = alive;
+  }
+
+  /* ---------- 主循环（常驻，舞台永远是活的） ---------- */
+  function fxLoop(ts) {
+    const t = ts / 1000;
+    const st = measureStageRect();
+    stageFloor = st.bottom - GROUND_H - 4;
+    stageLeftB = st.left + 10;
+    stageRightB = st.right - 10;
+
+    c2d.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    drawAmbient(t, st);
+    drawGroundDecor(t, st);
+    drawProps(t, st);
+    drawMascot(t, st);
+    updateBouncers(t);
+    updateParticles();
+    requestAnimationFrame(fxLoop);
+  }
+
+  /* =====================================================
+     6. 发声主流程
+     ===================================================== */
+  let pressCount = 0;
+  const counterEl = document.getElementById("counter");
+
+  /* 全部按键 → 音高（C 大调五声音阶，乱按也和谐）
+     数字键走低音区、字母走高音区，空格是低音根音，任意键都有固定音高 */
+  function midiFor(key) {
+    if (key === " ") return 48;
+    const di = DIGITS.indexOf(key);
+    if (di >= 0) return 48 + PENTA[di % PENTA.length];
+    const li = LETTERS.indexOf(key);
+    if (li >= 0) return 60 + PENTA[li % PENTA.length];
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 9973;
+    return 60 + PENTA[h % PENTA.length];
+  }
+
+  function playKey(key, tileEl) {
+    audioReady();
+    const t = ctx.currentTime + 0.001;
+    const cr = tileCreature(key);
+
+    /* 全键盘统一走旋律音，不再混鼓声 */
+    if (key === " ") {
+      playTone(48, t, 0.92);            /* C3 根音 */
+      playTone(55, t + 0.006, 0.62);    /* G3 五度叠加，按空格更厚 */
+    } else {
+      playTone(midiFor(key), t, 0.86);
+    }
+
+    if (tileEl) {
+      tileEl.classList.add("active");
+      setTimeout(() => tileEl.classList.remove("active"), 170);
+    }
+
+    let x, y;
+    if (tileEl) {
+      const r = tileEl.getBoundingClientRect();
+      x = r.left + r.width / 2;
+      y = r.top - 8;
+    } else {
+      const st = measureStageRect();
+      x = st.left + st.width * (0.25 + Math.random() * 0.5);
+      y = st.bottom - 30;
+    }
+    const big = key === " ";
+    burst(x, y, big ? 44 : 24, big);
+    spawnBouncer(cr, x, stageFloor - 6);
+    if (big) spawnBouncer(cr, x - 60, stageFloor - 6);
+    const nowMs = performance.now();
+    mascotState = { type: cr.type, color: cr.color, until: nowMs + 1300, happyUntil: nowMs + 400 };
+
+    pressCount++;
+    counterEl.textContent = "🎵 " + pressCount + " 个音";
+    counterEl.classList.remove("bump");
+    void counterEl.offsetWidth;
+    counterEl.classList.add("bump");
+    if (pressCount % 20 === 0) {
+      showToast("🎉 你已经弹出 " + pressCount + " 个音，太棒啦！");
+      confettiRain();
+    }
+  }
+
+  function showToast(text) {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = text;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 2200);
+  }
+
+  /* =====================================================
+     7. 物理键盘事件（Mac 全键 · 任何键都发声）
+     ===================================================== */
+  /* 按键归一化：优先按物理键位（e.code）识别，
+     这样按住 ⌘/⌥ 时 e.key 变成特殊字符（如 ⌥A→å）也仍能对上正确的键 */
+  const CODE_MAP = {
+    Space: " ", Backquote: "`", Minus: "-", Equal: "=",
+    BracketLeft: "[", BracketRight: "]", Backslash: "\\",
+    Semicolon: ";", Quote: "'", Comma: ",", Period: ".", Slash: "/",
+    NumpadAdd: "+", NumpadSubtract: "-", NumpadMultiply: "*",
+    NumpadDivide: "/", NumpadDecimal: "."
+  };
+  function normKey(e) {
+    const c = e.code || "";
+    let m;
+    if ((m = /^Key([A-Z])$/.exec(c))) return m[1].toLowerCase();
+    if ((m = /^Digit([0-9])$/.exec(c))) return m[1];
+    if ((m = /^Numpad([0-9])$/.exec(c))) return m[1];
+    if ((m = /^F([1-9]|1[0-9])$/.exec(c))) return c.toLowerCase();
+    if (CODE_MAP[c] !== undefined) return CODE_MAP[c];
+    const k = e.key || "";
+    return k.length === 1 ? k.toLowerCase() : k.toLowerCase();
+  }
+
+  let lastKeyName = "", lastKeyAt = 0;
+
+  window.addEventListener("keydown", e => {
+    const k0 = normKey(e);
+
+    /* 顶部锁定键（esc / F1-F12 / del）：永久禁用
+       —— 拦掉默认行为（删字、系统功能），且不发声、不弹图案 */
+    if (isOffKey(k0)) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (locked && !document.fullscreenElement) enterFullscreen();
+      warnOffKey();
+      return;
+    }
+
+    /* 浏览器快捷键：能拦的尽量拦（⌘W / ⌘Q 属浏览器保留键，网页无权限拦截） */
+    if ((e.metaKey || e.ctrlKey) &&
+        ["r","t","n","w","q","l","j","s","p","d","f","o","u","g","h","k","e","y"].includes(k0)) {
+      e.preventDefault();
+    }
+    if (e.altKey && ["arrowleft","arrowright","arrowup","arrowdown","home","f4"].includes(k0)) e.preventDefault();
+    if (k0 === "tab" || k0 === " " || k0 === "backspace") e.preventDefault();
+
+    /* 长按可连续发声，但限流到每 80ms 一次，避免糊成噪音 */
+    const now = performance.now();
+    if (k0 === lastKeyName && now - lastKeyAt < 80) return;
+    lastKeyName = k0; lastKeyAt = now;
+
+    /* 关键修复：不再因为按着 ⌘/⌃/⌥ 就直接 return，
+       修饰键本身（⌘ ⌥ ⌃ caps）以及组合键下也都是有声音的 */
+    if (locked && !document.fullscreenElement) enterFullscreen();
+    const tile = tiles[k0] || null;
+    playKey(k0, tile);
+  }, true);
+
+  window.addEventListener("blur", () => {
+    document.querySelectorAll(".tile.active").forEach(el => el.classList.remove("active"));
+  });
+
+  /* =====================================================
+     8. 儿童锁：全屏锁定 + 防误退 + 防触摸板手势
+     ===================================================== */
+  try { history.pushState(null, "", location.href); history.pushState(null, "", location.href); } catch (err) {}
+  window.addEventListener("popstate", () => {
+    try { history.pushState(null, "", location.href); } catch (err) {}
+    if (locked) showToast("🔒 儿童锁开启中，不能离开哦～");
+  });
+  window.addEventListener("beforeunload", e => {
+    if (!locked) return;                 /* 只有在儿童锁开启时才强制确认，家长关闭不受影响 */
+    e.preventDefault();
+    e.returnValue = "";
+    return "";
+  });
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.addEventListener("selectstart", e => e.preventDefault());
+  document.addEventListener("dragstart", e => e.preventDefault());
+  document.addEventListener("dblclick", e => e.preventDefault());
+  document.addEventListener("auxclick", e => e.preventDefault());     /* 中键/侧键不新开标签 */
+  document.addEventListener("wheel", e => e.preventDefault(), { passive: false });
+  document.addEventListener("gesturestart", e => e.preventDefault());
+  document.addEventListener("gesturechange", e => e.preventDefault());
+  document.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+
+  const lockBtn = document.getElementById("lockBtn");
+  const LOCK_KEY = "qqk-child-lock";
+  let locked = false;
+  try { locked = localStorage.getItem(LOCK_KEY) === "1"; } catch (err) {}
+
+  function refreshLock() {
+    lockBtn.textContent = locked ? "🔒 已锁定" : "🔒 儿童锁";
+    lockBtn.title = locked ? "长按 1.5 秒解除" : "开启全屏儿童锁";
+    lockBtn.classList.toggle("locked", locked);
+    document.body.classList.toggle("locked", locked);
+  }
+
+  function enterFullscreen() {
+    const el = document.documentElement;
+    if (!el.requestFullscreen || document.fullscreenElement) return;
+    const p = el.requestFullscreen({ navigationUI: "hide" });
+    if (p && p.catch) p.catch(() => {});
+  }
+
+  function setLocked(on) {
+    locked = on;
+    try { localStorage.setItem(LOCK_KEY, on ? "1" : "0"); } catch (err) {}
+    refreshLock();
+    if (on) {
+      enterFullscreen();
+      showToast("🔒 已锁定：全屏 + 拦截退出（家长长按按钮 1.5 秒解锁）");
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+      document.body.classList.remove("fs-lost");
+      fsRetryTimers.forEach(clearTimeout);
+      showToast("🔓 已解锁");
+    }
+  }
+
+  /* 全屏一旦被 Esc / 系统手势退出，多级重试抢回
+     Chrome 在用户按 Esc 后有约 1 秒"退出冷静期"，单次重试会被拒绝，所以要连续补 */
+  let fsRetryTimers = [];
+  let fsWarnAt = 0;
+  function grabFullscreenBack() {
+    document.body.classList.add("fs-lost");
+    fsRetryTimers.forEach(clearTimeout);
+    fsRetryTimers = [];
+    [0, 120, 400, 900, 1600, 2600, 4000].forEach(ms => {
+      fsRetryTimers.push(setTimeout(() => {
+        if (locked && !document.fullscreenElement) enterFullscreen();
+      }, ms));
+    });
+    const now = performance.now();
+    if (now - fsWarnAt > 2500) {
+      fsWarnAt = now;
+      showToast("🔒 esc 已被锁住，正在回到全屏～");
+    }
+  }
+
+  document.addEventListener("fullscreenchange", () => {
+    if (locked && !document.fullscreenElement) grabFullscreenBack();
+    else document.body.classList.remove("fs-lost");
+  });
+
+  /* 遮罩本身就是"点一下回全屏"的按钮（用户手势，成功率 100%）
+     若浏览器仍然拒绝，1.5 秒后重新显示遮罩，循环往复 */
+  document.getElementById("fsHint").addEventListener("pointerdown", e => {
+    e.preventDefault();
+    enterFullscreen();
+    document.body.classList.remove("fs-lost");
+    setTimeout(() => {
+      if (locked && !document.fullscreenElement) document.body.classList.add("fs-lost");
+    }, 3000);
+  });
+
+  /* 切走再切回来时，重新抢回全屏 */
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && locked && !document.fullscreenElement) enterFullscreen();
+  });
+
+  /* 锁定状态下任意一次点击/按键都顺手补回全屏（浏览器要求必须由用户操作触发） */
+  document.addEventListener("pointerdown", () => {
+    if (locked && !document.fullscreenElement) enterFullscreen();
+  }, true);
+
+  /* 锁定 → 需长按 1.5 秒才解除（小朋友按不出来） */
+  let holdTimer = null;
+  lockBtn.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    if (!locked) { setLocked(true); return; }
+    showToast("👆 长按 1.5 秒才能解锁，请家长操作～");
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => setLocked(false), 1500);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(ev =>
+    lockBtn.addEventListener(ev, () => clearTimeout(holdTimer))
+  );
+
+  /* =====================================================
+     9. 控制栏 + 启动
+     ===================================================== */
+  document.getElementById("themeBtns").addEventListener("click", e => {
+    const btn = e.target.closest(".tbtn");
+    if (!btn) return;
+    theme = btn.dataset.t;
+    document.querySelectorAll(".tbtn").forEach(b => b.classList.toggle("on", b === btn));
+    /* 只换主题类，保留锁定态，避免切主题把儿童锁/遮罩状态清掉 */
+    const keep = ["locked", "fs-lost"].filter(c => document.body.classList.contains(c));
+    document.body.className = "theme-" + theme + (keep.length ? " " + keep.join(" ") : "");
+    refreshTiles();
+    refreshLock();
+    initAmbient();
+  });
+
+  document.getElementById("vol").addEventListener("input", e => {
+    volume = e.target.value / 100;
+    if (master && !muted) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.02);
+  });
+
+  const muteBtn = document.getElementById("muteBtn");
+  muteBtn.addEventListener("click", () => {
+    muted = !muted;
+    muteBtn.textContent = muted ? "🔇" : "🔊";
+    muteBtn.classList.toggle("muted", muted);
+    if (master) master.gain.setTargetAtTime(muted ? 0 : volume, ctx.currentTime, 0.02);
+  });
+
+  /* ---------- 音色切换 ---------- */
+  const timbreWrap = document.getElementById("timbreWrap");
+  const timbreMenu = document.getElementById("timbreMenu");
+  const timbreLabel = document.getElementById("timbreLabel");
+
+  function refreshTimbreUI() {
+    timbreLabel.textContent = TIMBRES[timbre].name;
+    timbreMenu.querySelectorAll(".tbm").forEach(b =>
+      b.classList.toggle("on", b.dataset.tb === timbre));
+  }
+
+  function setTimbre(id) {
+    if (!TIMBRES[id]) return;
+    timbre = id;
+    try { localStorage.setItem("qqk-timbre", id); } catch (err) {}
+    refreshTimbreUI();
+    timbreWrap.classList.remove("open");
+    audioReady();
+    /* 试听三个音，让家长马上听出区别 */
+    const t0 = ctx.currentTime + 0.02;
+    [60, 64, 67].forEach((m, i) => playTone(m, t0 + i * 0.14, 0.8));
+    showToast(TIMBRES[id].emoji + " 音色换成「" + TIMBRES[id].name + "」啦");
+  }
+
+  document.getElementById("timbreBtn").addEventListener("click", e => {
+    e.stopPropagation();
+    timbreWrap.classList.toggle("open");
+    audioReady();
+    if (timbreWrap.classList.contains("open")) {
+      const t0 = ctx.currentTime + 0.02;
+      playTone(72, t0, 0.7);
+    }
+  });
+  timbreMenu.querySelectorAll(".tbm").forEach(b => {
+    b.addEventListener("click", e => {
+      e.stopPropagation();
+      setTimbre(b.dataset.tb);
+    });
+  });
+  document.addEventListener("click", () => timbreWrap.classList.remove("open"));
+  refreshTimbreUI();
+
+  buildKeyboard();
+  refreshTiles();
+  initAmbient();
+  refreshLock();
+  /* 上次锁过：浏览器不允许自动进全屏，先给出"点一下回全屏"的入口 */
+  if (locked && !document.fullscreenElement) document.body.classList.add("fs-lost");
+  measureTileRects();
+  requestAnimationFrame(iconLoop);
+  setTimeout(measureTileRects, 260);           /* 字体/布局稳定后再量一次 */
+  window.addEventListener("load", measureTileRects);
+  if (!fxStarted) { fxStarted = true; requestAnimationFrame(fxLoop); }
+})();
+</script>
+</body>
+</html>
